@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vocabulary Manager</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background: #f8f9fa;
+        }
+
+        .nav-bar {
+            padding: 1rem;
+            background: white;
+            border-bottom: 1px solid #ddd;
+            margin-bottom: 2rem;
+        }
+
+        .back-link {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        .search-bar {
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 1rem;
+        }
+
+        .search-input {
+            flex: 1;
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .vocab-list {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .vocab-item {
+            padding: 1rem;
+            border-bottom: 1px solid #eee;
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .vocab-item:last-child {
+            border-bottom: none;
+        }
+
+        .word {
+            font-weight: 500;
+        }
+
+        .translation {
+            color: #666;
+        }
+
+        .next-review {
+            font-size: 0.875rem;
+            color: #666;
+        }
+
+        .edit-btn {
+            padding: 0.25rem 0.5rem;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .edit-btn:hover {
+            background: #0056b3;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+        }
+
+        .modal-header {
+            margin-bottom: 1rem;
+        }
+
+        .modal-form {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .form-group label {
+            font-weight: 500;
+        }
+
+        .form-group input, .form-group textarea {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 1rem;
+        }
+
+        .modal-actions button {
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .save-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+        }
+
+        .cancel-btn {
+            background: #dc3545;
+            color: white;
+            border: none;
+        }
+
+        .mastery-indicator {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+
+        .mastery-high {
+            background: #28a745;
+        }
+
+        .mastery-medium {
+            background: #ffc107;
+        }
+
+        .mastery-low {
+            background: #dc3545;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-bar">
+        <a href="/" class="back-link">← Back to Main Page</a>
+    </div>
+
+    <div class="container">
+        <div class="search-bar">
+            <input type="text" 
+                   class="search-input" 
+                   placeholder="Search words..." 
+                   id="searchInput">
+        </div>
+
+        <div class="vocab-list" id="vocabList">
+            <!-- Vocabulary items will be inserted here -->
+        </div>
+    </div>
+
+    <div class="modal" id="editModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Edit Word</h3>
+            </div>
+            <form class="modal-form" id="editForm">
+                <input type="hidden" id="editWordId">
+                <div class="form-group">
+                    <label for="editWord">Word</label>
+                    <input type="text" id="editWord" required>
+                </div>
+                <div class="form-group">
+                    <label for="editTranslation">Translation</label>
+                    <textarea id="editTranslation" required></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="cancel-btn" onclick="closeModal()">Cancel</button>
+                    <button type="submit" class="save-btn">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let vocabList = [];
+
+        async function loadVocab() {
+            const response = await fetch('/api/vocab/all');
+            vocabList = await response.json();
+            renderVocabList(vocabList);
+        }
+
+        function getMasteryIndicator(word) {
+            if (word.easiness_factor >= 2.5 && word.repetition_count >= 3) {
+                return '<span class="mastery-indicator mastery-high" title="Mastered"></span>';
+            } else if (word.easiness_factor >= 2.0) {
+                return '<span class="mastery-indicator mastery-medium" title="Learning"></span>';
+            }
+            return '<span class="mastery-indicator mastery-low" title="New"></span>';
+        }
+
+        function renderVocabList(words) {
+            const container = document.getElementById('vocabList');
+            container.innerHTML = words.map(word => `
+                <div class="vocab-item">
+                    <div class="word">
+                        ${getMasteryIndicator(word)}
+                        ${word.word}
+                    </div>
+                    <div class="translation">${Array.isArray(word.translation) ? word.translation.join(', ') : word.translation}</div>
+                    <button class="edit-btn" onclick="editWord('${word.word}')">Edit</button>
+                </div>
+            `).join('');
+        }
+
+        function editWord(word) {
+            const wordData = vocabList.find(w => w.word === word);
+            document.getElementById('editWordId').value = word;
+            document.getElementById('editWord').value = word;
+            document.getElementById('editTranslation').value = 
+                Array.isArray(wordData.translation) ? wordData.translation.join(', ') : wordData.translation;
+            document.getElementById('editModal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('editModal').style.display = 'none';
+        }
+
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase();
+            const filteredWords = vocabList.filter(word => 
+                word.word.toLowerCase().includes(searchTerm) || 
+                (Array.isArray(word.translation) ? 
+                    word.translation.some(t => t.toLowerCase().includes(searchTerm)) :
+                    word.translation.toLowerCase().includes(searchTerm))
+            );
+            renderVocabList(filteredWords);
+        });
+
+        document.getElementById('editForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData();
+            formData.append('old_word', document.getElementById('editWordId').value);
+            formData.append('new_word', document.getElementById('editWord').value);
+            formData.append('translation', document.getElementById('editTranslation').value);
+
+            await fetch('/api/vocab/edit', {
+                method: 'POST',
+                body: formData
+            });
+
+            closeModal();
+            loadVocab();
+        });
+
+        // Initialize
+        loadVocab();
+    </script>
+</body>
+</html> 

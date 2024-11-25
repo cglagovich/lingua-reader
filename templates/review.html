@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vocabulary Review</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+
+        .review-container {
+            max-width: 600px;
+            margin: 2rem auto;
+            padding: 1rem;
+        }
+
+        .review-status {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .review-card {
+            border: 1px solid #ddd;
+            padding: 2rem;
+            border-radius: 8px;
+            text-align: center;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .rating-grid {
+            display: grid;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .rating-grid button {
+            padding: 0.5rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background: #f8f9fa;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .rating-grid button:hover {
+            background: #e9ecef;
+        }
+
+        .show-translation {
+            margin: 1rem 0;
+            padding: 0.5rem 1rem;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .show-translation:hover {
+            background: #0056b3;
+        }
+
+        h2 {
+            margin: 0 0 1rem 0;
+            color: #333;
+        }
+
+        h3 {
+            margin: 1rem 0;
+            color: #666;
+        }
+
+        h4 {
+            margin: 1rem 0;
+            color: #444;
+        }
+
+        .nav-bar {
+            padding: 1rem;
+            background: #f8f9fa;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .back-link {
+            color: #007bff;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .back-link:hover {
+            text-decoration: underline;
+        }
+
+        .stats-panel {
+            max-width: 600px;
+            margin: 1rem auto;
+            padding: 1rem;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .stats-panel h3 {
+            margin: 0 0 1rem 0;
+            text-align: center;
+            color: #333;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 1rem;
+            text-align: center;
+        }
+
+        .stat-item {
+            padding: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #007bff;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: #666;
+        }
+
+        .mastery-progress {
+            height: 4px;
+            background: #e9ecef;
+            border-radius: 2px;
+            margin-top: 1rem;
+        }
+
+        .mastery-progress-bar {
+            height: 100%;
+            background: #28a745;
+            border-radius: 2px;
+            transition: width 0.3s ease;
+        }
+
+        .mode-selector {
+            max-width: 600px;
+            margin: 1rem auto;
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+        }
+
+        .mode-btn {
+            padding: 0.5rem 1rem;
+            border: 1px solid #007bff;
+            background: white;
+            color: #007bff;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .mode-btn:hover {
+            background: #f8f9fa;
+        }
+
+        .mode-btn.active {
+            background: #007bff;
+            color: white;
+        }
+
+        .stats-panel {
+            margin-top: 0;
+        }
+
+        .next-btn {
+            padding: 0.75rem 1.5rem;
+            background: #28a745;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            transition: background-color 0.2s;
+            margin-top: 1rem;
+        }
+
+        .next-btn:hover {
+            background: #218838;
+        }
+    </style>
+</head>
+<body>
+    <div class="nav-bar">
+        <a href="/" class="back-link">← Back to Main Page</a>
+        <a href="/vocab-manager" class="back-link" style="margin-left: 1rem;">Manage Vocabulary</a>
+    </div>
+
+    <div class="mode-selector">
+        <button class="mode-btn active" id="reviewMode">Due for Review</button>
+        <button class="mode-btn" id="practiceMode">Practice All Words</button>
+    </div>
+
+    <div class="stats-panel">
+        <h3>Your Progress</h3>
+        <div class="stats-grid">
+            <div class="stat-item">
+                <div class="stat-value" id="totalWords">-</div>
+                <div class="stat-label">Total Words</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="masteredWords">-</div>
+                <div class="stat-label">Mastered</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="learningWords">-</div>
+                <div class="stat-label">Learning</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="avgRecall">-</div>
+                <div class="stat-label">Avg Recall</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="dueToday">-</div>
+                <div class="stat-label">Due Today</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="review-container" id="reviewContainer">
+        <div class="review-status">
+            <span id="progressText">Loading reviews...</span>
+        </div>
+        
+        <div class="review-card" id="reviewCard">
+            <div class="word-display">
+                <h2 id="germanWord"></h2>
+            </div>
+            
+            <div class="translation hidden" id="translationDiv">
+                <h3 id="translation"></h3>
+            </div>
+            
+            <button class="show-translation" id="showTranslation">
+                Show Translation
+            </button>
+            
+            <div class="controls hidden" id="controlsDiv">
+                ${isPracticeMode ? `
+                    <div class="rating-buttons">
+                        <h4>How well did you know this?</h4>
+                        <div class="rating-grid">
+                            <button data-rating="5">Perfect recall (5)</button>
+                            <button data-rating="4">Slight hesitation (4)</button>
+                            <button data-rating="3">Had to think hard (3)</button>
+                            <button data-rating="2">Recognized it (2)</button>
+                            <button data-rating="1">Barely remembered (1)</button>
+                            <button data-rating="0">Completely forgot (0)</button>
+                        </div>
+                    </div>
+                ` : `
+                    <button class="next-btn" id="nextButton">Next Word →</button>
+                `}
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentWord = null;
+        let remainingWords = [];
+        let reviewedCount = 0;
+        let isPracticeMode = false;
+
+        async function loadStats() {
+            const response = await fetch('/api/review/stats');
+            const stats = await response.json();
+            
+            document.getElementById('totalWords').textContent = stats.total_words;
+            document.getElementById('masteredWords').textContent = stats.mastered_words;
+            document.getElementById('learningWords').textContent = stats.learning_words;
+            document.getElementById('avgRecall').textContent = stats.avg_recall;
+            document.getElementById('dueToday').textContent = stats.words_due_today;
+        }
+
+        async function loadWords(mode) {
+            const endpoint = mode === 'practice' ? '/api/vocab/practice' : '/api/review/due';
+            const response = await fetch(endpoint);
+            const data = await response.json();
+            remainingWords = data.due_words;
+            reviewedCount = 0;
+            updateProgress();
+            loadNextWord();
+        }
+
+        function updateProgress() {
+            const total = reviewedCount + remainingWords.length;
+            document.getElementById('progressText').textContent = 
+                `Progress: ${reviewedCount}/${total} words (${isPracticeMode ? 'Practice Mode' : 'Review Mode'})`;
+        }
+
+        function loadNextWord() {
+            // Reset the review card to its initial state first
+            document.getElementById('reviewCard').innerHTML = `
+                <div class="word-display">
+                    <h2 id="germanWord"></h2>
+                </div>
+                
+                <div class="translation hidden" id="translationDiv">
+                    <h3 id="translation"></h3>
+                </div>
+                
+                <button class="show-translation" id="showTranslation">
+                    Show Translation
+                </button>
+                
+                <div class="controls hidden" id="controlsDiv">
+                    ${isPracticeMode ? `
+                        <div class="rating-buttons">
+                            <h4>How well did you know this?</h4>
+                            <div class="rating-grid">
+                                <button data-rating="5">Perfect recall (5)</button>
+                                <button data-rating="4">Slight hesitation (4)</button>
+                                <button data-rating="3">Had to think hard (3)</button>
+                                <button data-rating="2">Recognized it (2)</button>
+                                <button data-rating="1">Barely remembered (1)</button>
+                                <button data-rating="0">Completely forgot (0)</button>
+                            </div>
+                        </div>
+                    ` : `
+                        <button class="next-btn" id="nextButton">Next Word →</button>
+                    `}
+                </div>
+            `;
+
+            // Reattach event listeners
+            document.getElementById('showTranslation').addEventListener('click', function() {
+                document.getElementById('translationDiv').classList.remove('hidden');
+                document.getElementById('controlsDiv').classList.remove('hidden');
+                this.classList.add('hidden');
+            });
+
+            if (!isPracticeMode) {
+                document.getElementById('nextButton')?.addEventListener('click', async function() {
+                    reviewedCount++;
+                    updateProgress();
+                    await loadStats();
+                    loadNextWord();
+                });
+            }
+
+            if (remainingWords.length === 0) {
+                document.getElementById('reviewCard').innerHTML = 
+                    '<h2>All done! Great job!</h2>';
+                return;
+            }
+            
+            currentWord = remainingWords.shift();
+            document.getElementById('germanWord').textContent = currentWord.word;
+            document.getElementById('translation').textContent = 
+                Array.isArray(currentWord.translation) 
+                    ? currentWord.translation.join(', ') 
+                    : currentWord.translation;
+            
+            document.getElementById('translationDiv').classList.add('hidden');
+            document.getElementById('controlsDiv').classList.add('hidden');
+            document.getElementById('showTranslation').classList.remove('hidden');
+        }
+
+        // Update the click handler for rating buttons
+        document.addEventListener('click', async function(e) {
+            if (!e.target.matches('.rating-grid button')) return;
+            
+            const quality = parseInt(e.target.dataset.rating);
+            const formData = new FormData();
+            formData.append('word', currentWord.word);
+            formData.append('quality', quality);
+            
+            // Only update spaced repetition data if in practice mode
+            if (isPracticeMode) {
+                await fetch('/api/review/submit', {
+                    method: 'POST',
+                    body: formData
+                });
+            }
+            
+            reviewedCount++;
+            updateProgress();
+            await loadStats();
+            loadNextWord();
+        });
+
+        document.getElementById('reviewMode').addEventListener('click', function() {
+            if (!this.classList.contains('active')) {
+                this.classList.add('active');
+                document.getElementById('practiceMode').classList.remove('active');
+                isPracticeMode = false;
+                loadWords('review');
+            }
+        });
+
+        document.getElementById('practiceMode').addEventListener('click', function() {
+            if (!this.classList.contains('active')) {
+                this.classList.add('active');
+                document.getElementById('reviewMode').classList.remove('active');
+                isPracticeMode = true;
+                loadWords('practice');
+            }
+        });
+
+        // Initialize
+        loadWords('review');
+        loadStats();
+    </script>
+</body>
+</html> 
